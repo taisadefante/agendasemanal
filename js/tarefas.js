@@ -17,7 +17,6 @@ import {
   signOut,
 } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 
-// Configuração Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDzL7cIuTaMQKfzxopGV4eLcbKAnNYjDNE",
   authDomain: "todolist-e50c3.firebaseapp.com",
@@ -27,12 +26,10 @@ const firebaseConfig = {
   appId: "1:790530819886:web:d3922dcd87284d9d301cbf",
 };
 
-// Inicialização Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Elementos do DOM
 const header = document.getElementById("header-grid");
 const corpo = document.getElementById("corpo-grade");
 const userEmail = document.getElementById("user-email");
@@ -47,25 +44,24 @@ const botaoSalvar = document.getElementById("botao-salvar");
 
 let dataBase = new Date();
 
-// Formatador de datas
 const formatarData = (data) =>
   `${data.getDate().toString().padStart(2, "0")}/${(data.getMonth() + 1)
     .toString()
     .padStart(2, "0")}/${data.getFullYear()}`;
 
-// Gera a semana atual (segunda a domingo)
 const gerarSemana = () => {
   const hoje = new Date(dataBase);
   const inicioSemana = new Date(hoje);
   inicioSemana.setDate(hoje.getDate() - hoje.getDay());
-  return Array.from({ length: 7 }, (_, i) => {
+
+  const diasVisiveis = window.innerWidth < 768 ? 3 : 7;
+  return Array.from({ length: diasVisiveis }, (_, i) => {
     const dia = new Date(inicioSemana);
     dia.setDate(inicioSemana.getDate() + i);
     return dia;
   });
 };
 
-// Atualiza o cabeçalho com dias da semana
 const atualizarCabecalho = (dias) => {
   header.innerHTML = '<div class="hora-coluna">Hora</div>';
   dias.forEach((data) => {
@@ -76,13 +72,13 @@ const atualizarCabecalho = (dias) => {
   });
 };
 
-// Gera grade de horários
 const gerarGradeHorario = (dias) => {
   corpo.innerHTML = "";
-  const horas = Array.from(
-    { length: 16 },
-    (_, i) => `${(7 + i).toString().padStart(2, "0")}:00`
-  );
+  const horas = Array.from({ length: 16 }, (_, i) => {
+    const hora = `${(7 + i).toString().padStart(2, "0")}:00`;
+    return hora;
+  });
+
   horas.forEach((hora) => {
     const linha = document.createElement("div");
     linha.className = "linha-horario";
@@ -97,6 +93,7 @@ const gerarGradeHorario = (dias) => {
       celula.className = "celula-dia";
       celula.dataset.dia = data.toISOString().split("T")[0];
       celula.dataset.hora = hora;
+      celula.style.minHeight = window.innerWidth < 768 ? "auto" : "40px";
       linha.appendChild(celula);
     });
 
@@ -104,10 +101,9 @@ const gerarGradeHorario = (dias) => {
   });
 };
 
-// Carrega tarefas do usuário logado
 const carregarTarefas = (dias, usuarioId) => {
   const inicio = dias[0].toISOString();
-  const fim = new Date(dias[6]);
+  const fim = new Date(dias[dias.length - 1]);
   fim.setHours(23, 59, 59, 999);
 
   const q = query(
@@ -179,7 +175,6 @@ const carregarTarefas = (dias, usuarioId) => {
   });
 };
 
-// Atualiza grade com tarefas
 const atualizarGrade = (usuario) => {
   const dias = gerarSemana();
   atualizarCabecalho(dias);
@@ -187,7 +182,6 @@ const atualizarGrade = (usuario) => {
   carregarTarefas(dias, usuario.uid);
 };
 
-// Navegação da semana
 document.getElementById("semana-anterior").onclick = () => {
   dataBase.setDate(dataBase.getDate() - 7);
   atualizarGrade(auth.currentUser);
@@ -201,7 +195,6 @@ document.getElementById("semana-hoje").onclick = () => {
   atualizarGrade(auth.currentUser);
 };
 
-// Modal abrir/fechar
 document.getElementById("btn-abrir-modal").onclick = () => {
   modal.style.display = "flex";
 };
@@ -213,12 +206,10 @@ document.getElementById("btn-fechar-modal").onclick = () => {
   botaoSalvar.textContent = "Adicionar";
 };
 
-// Logout
 logoutBtn.addEventListener("click", () => {
-  signOut(auth).then(() => (window.location.href = "./login.html"));
+  signOut(auth).then(() => (window.location.href = "./index.html"));
 });
 
-// Formulário de tarefa
 formModal.addEventListener("submit", async (e) => {
   e.preventDefault();
   const nome = formModal.nome.value;
@@ -256,10 +247,15 @@ formModal.addEventListener("submit", async (e) => {
   }
 });
 
-// Verifica usuário logado
 onAuthStateChanged(auth, (user) => {
-  if (!user) return (window.location.href = "./login.html");
+  if (!user) return (window.location.href = "./index.html");
   document.getElementById("logout-box").style.display = "flex";
   userEmail.textContent = user.email;
   atualizarGrade(user);
+});
+
+window.addEventListener("resize", () => {
+  if (auth.currentUser) {
+    atualizarGrade(auth.currentUser);
+  }
 });
