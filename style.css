@@ -46,7 +46,8 @@ h1 {
 }
 
 input,
-button {
+button,
+select {
   padding: 10px;
   font-size: 14px;
   border-radius: 5px;

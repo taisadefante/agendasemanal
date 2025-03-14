@@ -1,3 +1,4 @@
+// tarefas.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
 import {
   getFirestore,
@@ -5,8 +6,8 @@ import {
   addDoc,
   query,
   where,
-  orderBy,
   onSnapshot,
+  orderBy,
   doc,
   deleteDoc,
   updateDoc,
@@ -35,16 +36,16 @@ const corpo = document.getElementById("corpo-grade");
 const userEmail = document.getElementById("user-email");
 const logoutBtn = document.getElementById("logout");
 const formTarefa = document.getElementById("form-tarefa");
+const alerta = document.getElementById("alerta");
 
 let dataBase = new Date();
 
-function formatarData(data) {
-  return `${data.getDate().toString().padStart(2, "0")}/${(data.getMonth() + 1)
+const formatarData = (data) =>
+  `${data.getDate().toString().padStart(2, "0")}/${(data.getMonth() + 1)
     .toString()
     .padStart(2, "0")}/${data.getFullYear()}`;
-}
 
-function gerarSemana() {
+const gerarSemana = () => {
   const hoje = new Date(dataBase);
   const inicioSemana = new Date(hoje);
   inicioSemana.setDate(hoje.getDate() - hoje.getDay());
@@ -53,9 +54,9 @@ function gerarSemana() {
     dia.setDate(inicioSemana.getDate() + i);
     return dia;
   });
-}
+};
 
-function atualizarCabecalho(dias) {
+const atualizarCabecalho = (dias) => {
   header.innerHTML = '<div class="hora-coluna">Hora</div>';
   dias.forEach((data) => {
     const diaNome = data.toLocaleDateString("pt-BR", { weekday: "short" });
@@ -63,15 +64,14 @@ function atualizarCabecalho(dias) {
       data
     )}</span><span class="dia-semana">${diaNome}</span></div>`;
   });
-}
+};
 
-function gerarGradeHorario(dias) {
+const gerarGradeHorario = (dias) => {
   corpo.innerHTML = "";
   const horas = Array.from(
     { length: 16 },
     (_, i) => `${(7 + i).toString().padStart(2, "0")}:00`
   );
-
   horas.forEach((hora) => {
     const linha = document.createElement("div");
     linha.className = "linha-horario";
@@ -91,9 +91,9 @@ function gerarGradeHorario(dias) {
 
     corpo.appendChild(linha);
   });
-}
+};
 
-function carregarTarefas(dias, usuarioId) {
+const carregarTarefas = (dias, usuarioId) => {
   const inicio = dias[0].toISOString();
   const fim = new Date(dias[6]);
   fim.setHours(23, 59, 59, 999);
@@ -120,7 +120,6 @@ function carregarTarefas(dias, usuarioId) {
           const tarefaDiv = document.createElement("div");
           tarefaDiv.className = "tarefa";
           if (t.status === "concluida") tarefaDiv.classList.add("concluida");
-
           tarefaDiv.innerHTML = `
             <span>${t.descricao}</span>
             <div class="tarefa-actions">
@@ -129,10 +128,8 @@ function carregarTarefas(dias, usuarioId) {
               <button class="excluir">✕</button>
             </div>
           `;
-
           tarefaDiv.querySelector(".concluir").onclick = () =>
             updateDoc(doc(db, "tarefas", docSnap.id), { status: "concluida" });
-
           tarefaDiv.querySelector(".editar").onclick = () => {
             const novaDesc = prompt("Descrição:", t.descricao);
             const novaData = prompt("Nova data/hora:", t.horario);
@@ -143,26 +140,23 @@ function carregarTarefas(dias, usuarioId) {
               });
             }
           };
-
           tarefaDiv.querySelector(".excluir").onclick = () => {
-            if (confirm("Excluir tarefa?")) {
+            if (confirm("Excluir tarefa?"))
               deleteDoc(doc(db, "tarefas", docSnap.id));
-            }
           };
-
           celula.appendChild(tarefaDiv);
         }
       }
     });
   });
-}
+};
 
-function atualizarGrade(usuario) {
+const atualizarGrade = (usuario) => {
   const dias = gerarSemana();
   atualizarCabecalho(dias);
   gerarGradeHorario(dias);
   carregarTarefas(dias, usuario.uid);
-}
+};
 
 document.getElementById("semana-anterior").onclick = () => {
   dataBase.setDate(dataBase.getDate() - 7);
@@ -184,27 +178,36 @@ logoutBtn.addEventListener("click", () => {
 formTarefa.addEventListener("submit", async (e) => {
   e.preventDefault();
   const descricao = formTarefa.descricao.value;
-  const horario = formTarefa.horario.value;
+  const dataStr = formTarefa.data.value; // yyyy-mm-dd
+  const horaStr = formTarefa.hora.value; // hh:mm
+  const horario = `${dataStr}T${horaStr}`; // Monta ISO yyyy-mm-ddThh:mm
   const user = auth.currentUser;
   if (!user) return;
 
-  try {
-    const date = new Date(horario);
-    date.setMinutes(0, 0, 0); // 🔁 arredondar para hora cheia
+  // Arredondar para hora cheia
+  const data = new Date(horarioInput);
+  data.setMinutes(0, 0, 0);
+  const horarioArredondado = data.toISOString().slice(0, 16);
 
+  try {
     await addDoc(collection(db, "tarefas"), {
       descricao,
-      horario: date.toISOString(),
+      horario: horarioArredondado,
       usuario: user.uid,
       status: "pendente",
     });
 
     formTarefa.reset();
+    const alerta = document.getElementById("alerta");
+    if (alerta) {
+      alerta.textContent = "✅ Tarefa adicionada com sucesso!";
+      alerta.style.display = "block";
+      setTimeout(() => (alerta.style.display = "none"), 3000);
+    }
+
     atualizarGrade(user);
-    window.showToast("Tarefa adicionada com sucesso!");
   } catch (err) {
-    console.error(err);
-    window.showToast("Erro ao cadastrar tarefa", "error");
+    alert("Erro ao cadastrar tarefa: " + err.message);
   }
 });
 

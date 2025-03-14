@@ -4,10 +4,6 @@
     <meta charset="UTF-8" />
     <title>Agenda Semanal</title>
     <link rel="stylesheet" href="./style.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
-    />
   </head>
   <body>
     <header>
@@ -19,6 +15,7 @@
     </header>
 
     <div class="semana-container">
+      <!-- Formulário de nova tarefa -->
       <form id="form-tarefa">
         <input
           type="text"
@@ -26,53 +23,61 @@
           placeholder="Descrição da tarefa"
           required
         />
-        <input type="datetime-local" name="horario" required step="3600" />
+
+        <!-- Novo campo: apenas data -->
+        <input type="date" name="data" required />
+
+        <!-- Novo campo: apenas horas cheias -->
+        <select name="hora" required>
+          <option value="">Selecione o horário</option>
+          <option value="07:00">07:00</option>
+          <option value="08:00">08:00</option>
+          <option value="09:00">09:00</option>
+          <option value="10:00">10:00</option>
+          <option value="11:00">11:00</option>
+          <option value="12:00">12:00</option>
+          <option value="13:00">13:00</option>
+          <option value="14:00">14:00</option>
+          <option value="15:00">15:00</option>
+          <option value="16:00">16:00</option>
+          <option value="17:00">17:00</option>
+          <option value="18:00">18:00</option>
+          <option value="19:00">19:00</option>
+          <option value="20:00">20:00</option>
+          <option value="21:00">21:00</option>
+          <option value="22:00">22:00</option>
+        </select>
+
         <button type="submit">Adicionar</button>
       </form>
 
+      <!-- Navegação de semana -->
       <div class="semana-navegacao">
         <button id="semana-anterior">◀ Anterior</button>
         <button id="semana-hoje">Hoje</button>
         <button id="semana-proxima">▶ Próxima</button>
       </div>
 
+      <!-- Grade semanal -->
       <div class="grade-semanal">
         <div class="header-grid" id="header-grid"></div>
         <div id="corpo-grade" class="corpo-grid"></div>
       </div>
+
+      <!-- Alerta de sucesso -->
+      <div
+        id="alerta"
+        style="
+          display: none;
+          text-align: center;
+          margin-top: 10px;
+          color: green;
+          font-weight: bold;
+        "
+      ></div>
     </div>
 
+    <!-- Script JS -->
     <script type="module" src="./js/tarefas.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <script>
-      window.showToast = function (message, type = "success") {
-        Toastify({
-          text: message,
-          duration: 3000,
-          gravity: "top",
-          position: "center",
-          backgroundColor: type === "success" ? "#28a745" : "#dc3545",
-          stopOnFocus: true,
-        }).showToast();
-      };
-
-      // Ajusta input para arredondar para hora cheia
-      document.addEventListener("DOMContentLoaded", () => {
-        const form = document.getElementById("form-tarefa");
-        const input = form.querySelector("input[name='horario']");
-
-        input.addEventListener("change", () => {
-          const date = new Date(input.value);
-          date.setMinutes(0, 0, 0);
-          input.value = date.toISOString().slice(0, 16);
-        });
-
-        form.addEventListener("submit", () => {
-          const date = new Date(input.value);
-          date.setMinutes(0, 0, 0);
-          input.value = date.toISOString().slice(0, 16);
-        });
-      });
-    </script>
   </body>
 </html>
