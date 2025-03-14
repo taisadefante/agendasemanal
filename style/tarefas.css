@@ -142,9 +142,23 @@ button:hover {
 
 .tarefa-actions {
   display: flex;
-  gap: 6px;
+  gap: 2px; /* reduz espaçamento entre ícones */
+  align-items: center;
 }
 
+.tarefa-actions button {
+  font-size: 12px; /* ícones menores */
+  padding: 2px 4px; /* menos espaço interno */
+  margin: 0; /* zera margens */
+  line-height: 1;
+  background: none;
+  border: none;
+  color: #333;
+  cursor: pointer;
+}
+.tarefa-actions button:hover {
+  color: #007bff;
+}
 .tarefa button {
   background: none;
   border: none;
