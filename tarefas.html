@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Agenda Semanal</title>
+    <link rel="stylesheet" href="./style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
+    />
+  </head>
+  <body>
+    <header>
+      <h1>Agenda Semanal</h1>
+      <div id="logout-box">
+        <span>Bem-vindo, <strong id="user-email"></strong></span>
+        <button id="logout">Logout</button>
+      </div>
+    </header>
+
+    <div class="semana-container">
+      <form id="form-tarefa">
+        <input
+          type="text"
+          name="descricao"
+          placeholder="Descrição da tarefa"
+          required
+        />
+        <input type="datetime-local" name="horario" required step="3600" />
+        <button type="submit">Adicionar</button>
+      </form>
+
+      <div class="semana-navegacao">
+        <button id="semana-anterior">◀ Anterior</button>
+        <button id="semana-hoje">Hoje</button>
+        <button id="semana-proxima">▶ Próxima</button>
+      </div>
+
+      <div class="grade-semanal">
+        <div class="header-grid" id="header-grid"></div>
+        <div id="corpo-grade" class="corpo-grid"></div>
+      </div>
+    </div>
+
+    <script type="module" src="./js/tarefas.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script>
+      window.showToast = function (message, type = "success") {
+        Toastify({
+          text: message,
+          duration: 3000,
+          gravity: "top",
+          position: "center",
+          backgroundColor: type === "success" ? "#28a745" : "#dc3545",
+          stopOnFocus: true,
+        }).showToast();
+      };
+
+      // Ajusta input para arredondar para hora cheia
+      document.addEventListener("DOMContentLoaded", () => {
+        const form = document.getElementById("form-tarefa");
+        const input = form.querySelector("input[name='horario']");
+
+        input.addEventListener("change", () => {
+          const date = new Date(input.value);
+          date.setMinutes(0, 0, 0);
+          input.value = date.toISOString().slice(0, 16);
+        });
+
+        form.addEventListener("submit", () => {
+          const date = new Date(input.value);
+          date.setMinutes(0, 0, 0);
+          input.value = date.toISOString().slice(0, 16);
+        });
+      });
+    </script>
+  </body>
+</html>
