@@ -1,3 +1,4 @@
+// tarefas.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
 import {
   getFirestore,
@@ -17,35 +18,32 @@ import {
   signOut,
 } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDzL7cIuTaMQKfzxopGV4eLcbKAnNYjDNE",
   authDomain: "todolist-e50c3.firebaseapp.com",
   projectId: "todolist-e50c3",
-  storageBucket: "todolist-e50c3.appspot.com",
+  storageBucket: "todolist-e50c3.firebasestorage.app",
   messagingSenderId: "790530819886",
   appId: "1:790530819886:web:d3922dcd87284d9d301cbf",
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 const auth = getAuth();
+const db = getFirestore(app);
 
-// DOM Elements
 const header = document.getElementById("header-grid");
 const corpo = document.getElementById("corpo-grade");
-const logoutBtn = document.getElementById("logout");
 const userEmail = document.getElementById("user-email");
+const logoutBtn = document.getElementById("logout");
 const formModal = document.getElementById("form-modal");
 const modal = document.getElementById("modal-form");
-const openModalBtn = document.getElementById("btn-abrir-modal");
-const closeModalBtn = document.getElementById("btn-fechar-modal");
-const modalDetalhes = document.getElementById("modal-tarefa");
+const modalTarefa = document.getElementById("modal-tarefa");
 const modalTitulo = document.getElementById("modal-titulo");
 const modalDescricao = document.getElementById("modal-descricao");
+const tituloFormulario = document.getElementById("titulo-formulario");
+const botaoSalvar = document.getElementById("botao-salvar");
 
 let dataBase = new Date();
-let editandoId = null;
 
 const formatarData = (data) =>
   `${data.getDate().toString().padStart(2, "0")}/${(data.getMonth() + 1)
@@ -67,9 +65,9 @@ const atualizarCabecalho = (dias) => {
   header.innerHTML = '<div class="hora-coluna">Hora</div>';
   dias.forEach((data) => {
     const diaNome = data.toLocaleDateString("pt-BR", { weekday: "short" });
-    header.innerHTML += `<div><span>${formatarData(
+    header.innerHTML += `<div><span class="data-dia">${formatarData(
       data
-    )}</span><span>${diaNome}</span></div>`;
+    )}</span><span class="dia-semana">${diaNome}</span></div>`;
   });
 };
 
@@ -79,7 +77,6 @@ const gerarGradeHorario = (dias) => {
     { length: 16 },
     (_, i) => `${(7 + i).toString().padStart(2, "0")}:00`
   );
-
   horas.forEach((hora) => {
     const linha = document.createElement("div");
     linha.className = "linha-horario";
@@ -128,9 +125,8 @@ const carregarTarefas = (dias, usuarioId) => {
           const tarefaDiv = document.createElement("div");
           tarefaDiv.className = "tarefa";
           if (t.status === "concluida") tarefaDiv.classList.add("concluida");
-
           tarefaDiv.innerHTML = `
-            <span>${t.nome}</span>
+            <span class="nome" style="flex: 1; cursor: pointer;">${t.nome}</span>
             <div class="tarefa-actions">
               <button class="concluir">✔</button>
               <button class="editar">✎</button>
@@ -138,46 +134,34 @@ const carregarTarefas = (dias, usuarioId) => {
             </div>
           `;
 
-          // Concluir / Desmarcar
-          tarefaDiv.querySelector(".concluir").onclick = () =>
-            updateDoc(doc(db, "tarefas", docSnap.id), {
-              status: t.status === "concluida" ? "pendente" : "concluida",
-            });
+          tarefaDiv.querySelector(".nome").onclick = () => {
+            modalTitulo.textContent = `${t.nome} - ${formatarData(
+              data
+            )} ${hora}`;
+            modalDescricao.textContent = t.descricao || "(Sem descrição)";
+            modalTarefa.style.display = "flex";
+          };
 
-          // Editar
+          tarefaDiv.querySelector(".concluir").onclick = () => {
+            const novoStatus =
+              t.status === "concluida" ? "pendente" : "concluida";
+            updateDoc(doc(db, "tarefas", docSnap.id), { status: novoStatus });
+          };
+
           tarefaDiv.querySelector(".editar").onclick = () => {
-            const d = new Date(t.horario);
-            document.querySelector("[name='nome']").value = t.nome;
-            document.querySelector("[name='descricao']").value =
-              t.descricao || "";
-            document.querySelector("[name='data']").value = d
-              .toISOString()
-              .split("T")[0];
-            document.querySelector("[name='hora']").value = d
-              .toTimeString()
-              .substring(0, 5);
-            editandoId = docSnap.id;
-            document.querySelector("#form-modal button").textContent =
-              "Atualizar";
+            formModal.nome.value = t.nome;
+            formModal.data.value = data.toISOString().split("T")[0];
+            formModal.hora.value = hora;
+            formModal.descricao.value = t.descricao;
+            formModal.setAttribute("data-id", docSnap.id);
+            tituloFormulario.textContent = "Editar Tarefa";
+            botaoSalvar.textContent = "Atualizar";
             modal.style.display = "flex";
           };
 
-          // Excluir
           tarefaDiv.querySelector(".excluir").onclick = () => {
             if (confirm("Excluir tarefa?"))
               deleteDoc(doc(db, "tarefas", docSnap.id));
-          };
-
-          // Ver detalhes
-          tarefaDiv.onclick = (e) => {
-            if (e.target.tagName === "BUTTON") return;
-            const d = new Date(t.horario);
-            modalTitulo.innerHTML = `${t.nome} <small>(${formatarData(
-              d
-            )} às ${hora})</small>`;
-            modalDescricao.textContent =
-              t.descricao || "Sem descrição cadastrada.";
-            modalDetalhes.style.display = "flex";
           };
 
           celula.appendChild(tarefaDiv);
@@ -194,7 +178,6 @@ const atualizarGrade = (usuario) => {
   carregarTarefas(dias, usuario.uid);
 };
 
-// Eventos de navegação
 document.getElementById("semana-anterior").onclick = () => {
   dataBase.setDate(dataBase.getDate() - 7);
   atualizarGrade(auth.currentUser);
@@ -208,60 +191,57 @@ document.getElementById("semana-hoje").onclick = () => {
   atualizarGrade(auth.currentUser);
 };
 
-// Modal
-openModalBtn.onclick = () => {
+document.getElementById("btn-abrir-modal").onclick = () => {
   modal.style.display = "flex";
 };
-closeModalBtn.onclick = () => {
+document.getElementById("btn-fechar-modal").onclick = () => {
   modal.style.display = "none";
   formModal.reset();
-  editandoId = null;
-  document.querySelector("#form-modal button").textContent = "Adicionar";
-};
-modalDetalhes.onclick = () => {
-  modalDetalhes.style.display = "none";
+  formModal.removeAttribute("data-id");
+  tituloFormulario.textContent = "Nova Tarefa";
+  botaoSalvar.textContent = "Adicionar";
 };
 
-// Logout
-logoutBtn.onclick = () => {
+logoutBtn.addEventListener("click", () => {
   signOut(auth).then(() => (window.location.href = "./login.html"));
-};
+});
 
-// Adicionar ou atualizar tarefa
-formModal.onsubmit = async (e) => {
+formModal.addEventListener("submit", async (e) => {
   e.preventDefault();
   const nome = formModal.nome.value;
-  const descricao = formModal.descricao.value;
   const data = formModal.data.value;
   const hora = formModal.hora.value;
+  const descricao = formModal.descricao.value;
   const user = auth.currentUser;
-  const horario = `${data}T${hora}`;
-
   if (!user) return;
-
-  if (editandoId) {
-    await updateDoc(doc(db, "tarefas", editandoId), {
-      nome,
-      descricao,
-      horario,
-    });
-  } else {
-    await addDoc(collection(db, "tarefas"), {
-      nome,
-      descricao,
-      horario,
-      usuario: user.uid,
-      status: "pendente",
-    });
+  const horario = `${data}T${hora}`;
+  const id = formModal.getAttribute("data-id");
+  try {
+    if (id) {
+      await updateDoc(doc(db, "tarefas", id), {
+        nome,
+        descricao,
+        horario,
+      });
+    } else {
+      await addDoc(collection(db, "tarefas"), {
+        nome,
+        descricao,
+        horario,
+        usuario: user.uid,
+        status: "pendente",
+      });
+    }
+    formModal.reset();
+    modal.style.display = "none";
+    formModal.removeAttribute("data-id");
+    tituloFormulario.textContent = "Nova Tarefa";
+    botaoSalvar.textContent = "Adicionar";
+  } catch (err) {
+    alert("Erro ao salvar tarefa: " + err.message);
   }
+});
 
-  modal.style.display = "none";
-  formModal.reset();
-  editandoId = null;
-  document.querySelector("#form-modal button").textContent = "Adicionar";
-};
-
-// Iniciar
 onAuthStateChanged(auth, (user) => {
   if (!user) return (window.location.href = "./login.html");
   document.getElementById("logout-box").style.display = "flex";

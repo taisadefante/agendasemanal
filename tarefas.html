@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <title>Agenda Semanal</title>
-    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./style/tarefas.css" />
   </head>
   <body>
     <header>
@@ -15,15 +15,8 @@
     </header>
 
     <div class="semana-container">
-      <div
-        class="semana-navegacao"
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-wrap: wrap;
-        "
-      >
+      <!-- Navegação da Semana -->
+      <div class="semana-navegacao">
         <button id="btn-abrir-modal">+ Tarefas</button>
         <div style="display: flex; gap: 10px">
           <button id="semana-anterior">◀ Anterior</button>
@@ -32,17 +25,17 @@
         </div>
       </div>
 
-      <!-- Grade semanal -->
+      <!-- Grade Semanal -->
       <div class="grade-semanal">
         <div class="header-grid" id="header-grid"></div>
         <div id="corpo-grade" class="corpo-grid"></div>
       </div>
 
-      <!-- Modal de formulário -->
+      <!-- Modal de Formulário -->
       <div id="modal-form" class="modal">
         <div class="modal-content">
           <span id="btn-fechar-modal" class="close">×</span>
-          <h2>Nova Tarefa</h2>
+          <h2 id="titulo-formulario">Nova Tarefa</h2>
           <form id="form-modal">
             <input
               type="text"
@@ -74,12 +67,12 @@
               name="descricao"
               placeholder="Descrição da tarefa (opcional)"
             ></textarea>
-            <button type="submit">Adicionar</button>
+            <button type="submit" id="botao-salvar">Adicionar</button>
           </form>
         </div>
       </div>
 
-      <!-- Modal de detalhes -->
+      <!-- Modal de Visualização -->
       <div id="modal-tarefa" class="modal">
         <div class="modal-content">
           <span
@@ -93,6 +86,7 @@
       </div>
     </div>
 
+    <!-- Firebase config inicial (para segurança já está no JS) -->
     <script type="module" src="./js/tarefas.js"></script>
   </body>
 </html>
