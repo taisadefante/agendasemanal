@@ -1,4 +1,3 @@
-// tarefas.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
 import {
   getFirestore,
@@ -11,7 +10,6 @@ import {
   doc,
   deleteDoc,
   updateDoc,
-  getDoc,
 } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 import {
   getAuth,
@@ -19,6 +17,7 @@ import {
   signOut,
 } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDzL7cIuTaMQKfzxopGV4eLcbKAnNYjDNE",
   authDomain: "todolist-e50c3.firebaseapp.com",
@@ -29,21 +28,24 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth();
 const db = getFirestore(app);
+const auth = getAuth();
 
+// DOM Elements
 const header = document.getElementById("header-grid");
 const corpo = document.getElementById("corpo-grade");
-const userEmail = document.getElementById("user-email");
 const logoutBtn = document.getElementById("logout");
-const formTarefa = document.getElementById("form-tarefa");
-const alerta = document.getElementById("alerta");
-const modal = document.getElementById("modal-tarefa");
+const userEmail = document.getElementById("user-email");
+const formModal = document.getElementById("form-modal");
+const modal = document.getElementById("modal-form");
+const openModalBtn = document.getElementById("btn-abrir-modal");
+const closeModalBtn = document.getElementById("btn-fechar-modal");
+const modalDetalhes = document.getElementById("modal-tarefa");
 const modalTitulo = document.getElementById("modal-titulo");
 const modalDescricao = document.getElementById("modal-descricao");
 
 let dataBase = new Date();
-let tarefaEditandoId = null;
+let editandoId = null;
 
 const formatarData = (data) =>
   `${data.getDate().toString().padStart(2, "0")}/${(data.getMonth() + 1)
@@ -65,9 +67,9 @@ const atualizarCabecalho = (dias) => {
   header.innerHTML = '<div class="hora-coluna">Hora</div>';
   dias.forEach((data) => {
     const diaNome = data.toLocaleDateString("pt-BR", { weekday: "short" });
-    header.innerHTML += `<div><span class="data-dia">${formatarData(
+    header.innerHTML += `<div><span>${formatarData(
       data
-    )}</span><span class="dia-semana">${diaNome}</span></div>`;
+    )}</span><span>${diaNome}</span></div>`;
   });
 };
 
@@ -77,6 +79,7 @@ const gerarGradeHorario = (dias) => {
     { length: 16 },
     (_, i) => `${(7 + i).toString().padStart(2, "0")}:00`
   );
+
   horas.forEach((hora) => {
     const linha = document.createElement("div");
     linha.className = "linha-horario";
@@ -125,6 +128,7 @@ const carregarTarefas = (dias, usuarioId) => {
           const tarefaDiv = document.createElement("div");
           tarefaDiv.className = "tarefa";
           if (t.status === "concluida") tarefaDiv.classList.add("concluida");
+
           tarefaDiv.innerHTML = `
             <span>${t.nome}</span>
             <div class="tarefa-actions">
@@ -134,34 +138,46 @@ const carregarTarefas = (dias, usuarioId) => {
             </div>
           `;
 
-          tarefaDiv.querySelector(".concluir").onclick = () => {
-            const novoStatus =
-              t.status === "concluida" ? "pendente" : "concluida";
-            updateDoc(doc(db, "tarefas", docSnap.id), { status: novoStatus });
-          };
+          // Concluir / Desmarcar
+          tarefaDiv.querySelector(".concluir").onclick = () =>
+            updateDoc(doc(db, "tarefas", docSnap.id), {
+              status: t.status === "concluida" ? "pendente" : "concluida",
+            });
 
+          // Editar
           tarefaDiv.querySelector(".editar").onclick = () => {
+            const d = new Date(t.horario);
             document.querySelector("[name='nome']").value = t.nome;
-            document.querySelector("[name='data']").value =
-              t.horario.split("T")[0];
-            document.querySelector("[name='hora']").value = t.horario
-              .split("T")[1]
-              .substring(0, 5);
             document.querySelector("[name='descricao']").value =
               t.descricao || "";
-            formTarefa.querySelector("button").textContent = "Atualizar";
-            tarefaEditandoId = docSnap.id;
+            document.querySelector("[name='data']").value = d
+              .toISOString()
+              .split("T")[0];
+            document.querySelector("[name='hora']").value = d
+              .toTimeString()
+              .substring(0, 5);
+            editandoId = docSnap.id;
+            document.querySelector("#form-modal button").textContent =
+              "Atualizar";
+            modal.style.display = "flex";
           };
 
+          // Excluir
           tarefaDiv.querySelector(".excluir").onclick = () => {
             if (confirm("Excluir tarefa?"))
               deleteDoc(doc(db, "tarefas", docSnap.id));
           };
 
-          tarefaDiv.onclick = () => {
-            modal.style.display = "flex";
-            modalTitulo.textContent = t.nome;
-            modalDescricao.textContent = t.descricao || "(Sem descrição)";
+          // Ver detalhes
+          tarefaDiv.onclick = (e) => {
+            if (e.target.tagName === "BUTTON") return;
+            const d = new Date(t.horario);
+            modalTitulo.innerHTML = `${t.nome} <small>(${formatarData(
+              d
+            )} às ${hora})</small>`;
+            modalDescricao.textContent =
+              t.descricao || "Sem descrição cadastrada.";
+            modalDetalhes.style.display = "flex";
           };
 
           celula.appendChild(tarefaDiv);
@@ -178,6 +194,7 @@ const atualizarGrade = (usuario) => {
   carregarTarefas(dias, usuario.uid);
 };
 
+// Eventos de navegação
 document.getElementById("semana-anterior").onclick = () => {
   dataBase.setDate(dataBase.getDate() - 7);
   atualizarGrade(auth.currentUser);
@@ -191,51 +208,60 @@ document.getElementById("semana-hoje").onclick = () => {
   atualizarGrade(auth.currentUser);
 };
 
-logoutBtn.addEventListener("click", () => {
+// Modal
+openModalBtn.onclick = () => {
+  modal.style.display = "flex";
+};
+closeModalBtn.onclick = () => {
+  modal.style.display = "none";
+  formModal.reset();
+  editandoId = null;
+  document.querySelector("#form-modal button").textContent = "Adicionar";
+};
+modalDetalhes.onclick = () => {
+  modalDetalhes.style.display = "none";
+};
+
+// Logout
+logoutBtn.onclick = () => {
   signOut(auth).then(() => (window.location.href = "./login.html"));
-});
+};
 
-formTarefa.addEventListener("submit", async (e) => {
+// Adicionar ou atualizar tarefa
+formModal.onsubmit = async (e) => {
   e.preventDefault();
+  const nome = formModal.nome.value;
+  const descricao = formModal.descricao.value;
+  const data = formModal.data.value;
+  const hora = formModal.hora.value;
   const user = auth.currentUser;
-  if (!user) return;
-
-  const nome = formTarefa.nome.value;
-  const data = formTarefa.data.value;
-  const hora = formTarefa.hora.value;
-  const descricao = formTarefa.descricao.value;
-
   const horario = `${data}T${hora}`;
 
-  try {
-    if (tarefaEditandoId) {
-      await updateDoc(doc(db, "tarefas", tarefaEditandoId), {
-        nome,
-        descricao,
-        horario,
-      });
-      tarefaEditandoId = null;
-      formTarefa.querySelector("button").textContent = "Adicionar";
-    } else {
-      await addDoc(collection(db, "tarefas"), {
-        nome,
-        descricao,
-        horario,
-        usuario: user.uid,
-        status: "pendente",
-      });
-    }
+  if (!user) return;
 
-    formTarefa.reset();
-    alerta.textContent = "✅ Tarefa adicionada com sucesso!";
-    alerta.style.display = "block";
-    setTimeout(() => (alerta.style.display = "none"), 3000);
-    atualizarGrade(user);
-  } catch (err) {
-    alert("Erro ao cadastrar tarefa: " + err.message);
+  if (editandoId) {
+    await updateDoc(doc(db, "tarefas", editandoId), {
+      nome,
+      descricao,
+      horario,
+    });
+  } else {
+    await addDoc(collection(db, "tarefas"), {
+      nome,
+      descricao,
+      horario,
+      usuario: user.uid,
+      status: "pendente",
+    });
   }
-});
 
+  modal.style.display = "none";
+  formModal.reset();
+  editandoId = null;
+  document.querySelector("#form-modal button").textContent = "Adicionar";
+};
+
+// Iniciar
 onAuthStateChanged(auth, (user) => {
   if (!user) return (window.location.href = "./login.html");
   document.getElementById("logout-box").style.display = "flex";
