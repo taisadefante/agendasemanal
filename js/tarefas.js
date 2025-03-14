@@ -11,6 +11,7 @@ import {
   doc,
   deleteDoc,
   updateDoc,
+  getDoc,
 } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 import {
   getAuth,
@@ -37,8 +38,12 @@ const userEmail = document.getElementById("user-email");
 const logoutBtn = document.getElementById("logout");
 const formTarefa = document.getElementById("form-tarefa");
 const alerta = document.getElementById("alerta");
+const modal = document.getElementById("modal-tarefa");
+const modalTitulo = document.getElementById("modal-titulo");
+const modalDescricao = document.getElementById("modal-descricao");
 
 let dataBase = new Date();
+let tarefaEditandoId = null;
 
 const formatarData = (data) =>
   `${data.getDate().toString().padStart(2, "0")}/${(data.getMonth() + 1)
@@ -121,29 +126,44 @@ const carregarTarefas = (dias, usuarioId) => {
           tarefaDiv.className = "tarefa";
           if (t.status === "concluida") tarefaDiv.classList.add("concluida");
           tarefaDiv.innerHTML = `
-            <span>${t.descricao}</span>
+            <span>${t.nome}</span>
             <div class="tarefa-actions">
               <button class="concluir">✔</button>
               <button class="editar">✎</button>
               <button class="excluir">✕</button>
             </div>
           `;
-          tarefaDiv.querySelector(".concluir").onclick = () =>
-            updateDoc(doc(db, "tarefas", docSnap.id), { status: "concluida" });
-          tarefaDiv.querySelector(".editar").onclick = () => {
-            const novaDesc = prompt("Descrição:", t.descricao);
-            const novaData = prompt("Nova data/hora:", t.horario);
-            if (novaDesc && novaData) {
-              updateDoc(doc(db, "tarefas", docSnap.id), {
-                descricao: novaDesc,
-                horario: novaData,
-              });
-            }
+
+          tarefaDiv.querySelector(".concluir").onclick = () => {
+            const novoStatus =
+              t.status === "concluida" ? "pendente" : "concluida";
+            updateDoc(doc(db, "tarefas", docSnap.id), { status: novoStatus });
           };
+
+          tarefaDiv.querySelector(".editar").onclick = () => {
+            document.querySelector("[name='nome']").value = t.nome;
+            document.querySelector("[name='data']").value =
+              t.horario.split("T")[0];
+            document.querySelector("[name='hora']").value = t.horario
+              .split("T")[1]
+              .substring(0, 5);
+            document.querySelector("[name='descricao']").value =
+              t.descricao || "";
+            formTarefa.querySelector("button").textContent = "Atualizar";
+            tarefaEditandoId = docSnap.id;
+          };
+
           tarefaDiv.querySelector(".excluir").onclick = () => {
             if (confirm("Excluir tarefa?"))
               deleteDoc(doc(db, "tarefas", docSnap.id));
           };
+
+          tarefaDiv.onclick = () => {
+            modal.style.display = "flex";
+            modalTitulo.textContent = t.nome;
+            modalDescricao.textContent = t.descricao || "(Sem descrição)";
+          };
+
           celula.appendChild(tarefaDiv);
         }
       }
@@ -177,34 +197,39 @@ logoutBtn.addEventListener("click", () => {
 
 formTarefa.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const descricao = formTarefa.descricao.value;
-  const dataStr = formTarefa.data.value; // yyyy-mm-dd
-  const horaStr = formTarefa.hora.value; // hh:mm
-  const horario = `${dataStr}T${horaStr}`; // Monta ISO yyyy-mm-ddThh:mm
   const user = auth.currentUser;
   if (!user) return;
 
-  // Arredondar para hora cheia
-  const data = new Date(horarioInput);
-  data.setMinutes(0, 0, 0);
-  const horarioArredondado = data.toISOString().slice(0, 16);
+  const nome = formTarefa.nome.value;
+  const data = formTarefa.data.value;
+  const hora = formTarefa.hora.value;
+  const descricao = formTarefa.descricao.value;
+
+  const horario = `${data}T${hora}`;
 
   try {
-    await addDoc(collection(db, "tarefas"), {
-      descricao,
-      horario: horarioArredondado,
-      usuario: user.uid,
-      status: "pendente",
-    });
-
-    formTarefa.reset();
-    const alerta = document.getElementById("alerta");
-    if (alerta) {
-      alerta.textContent = "✅ Tarefa adicionada com sucesso!";
-      alerta.style.display = "block";
-      setTimeout(() => (alerta.style.display = "none"), 3000);
+    if (tarefaEditandoId) {
+      await updateDoc(doc(db, "tarefas", tarefaEditandoId), {
+        nome,
+        descricao,
+        horario,
+      });
+      tarefaEditandoId = null;
+      formTarefa.querySelector("button").textContent = "Adicionar";
+    } else {
+      await addDoc(collection(db, "tarefas"), {
+        nome,
+        descricao,
+        horario,
+        usuario: user.uid,
+        status: "pendente",
+      });
     }
 
+    formTarefa.reset();
+    alerta.textContent = "✅ Tarefa adicionada com sucesso!";
+    alerta.style.display = "block";
+    setTimeout(() => (alerta.style.display = "none"), 3000);
     atualizarGrade(user);
   } catch (err) {
     alert("Erro ao cadastrar tarefa: " + err.message);

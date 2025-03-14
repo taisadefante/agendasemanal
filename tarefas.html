@@ -17,17 +17,13 @@
     <div class="semana-container">
       <!-- Formulário de nova tarefa -->
       <form id="form-tarefa">
-        <input
-          type="text"
-          name="descricao"
-          placeholder="Descrição da tarefa"
-          required
-        />
+        <!-- Nome da tarefa -->
+        <input type="text" name="nome" placeholder="Nome da tarefa" required />
 
-        <!-- Novo campo: apenas data -->
+        <!-- Data da tarefa -->
         <input type="date" name="data" required />
 
-        <!-- Novo campo: apenas horas cheias -->
+        <!-- Hora da tarefa (apenas horários inteiros) -->
         <select name="hora" required>
           <option value="">Selecione o horário</option>
           <option value="07:00">07:00</option>
@@ -48,6 +44,13 @@
           <option value="22:00">22:00</option>
         </select>
 
+        <!-- Descrição detalhada (modal) -->
+        <textarea
+          name="descricao"
+          placeholder="Descrição da tarefa (opcional)"
+        ></textarea>
+
+        <!-- Botão adicionar -->
         <button type="submit">Adicionar</button>
       </form>
 
@@ -65,19 +68,23 @@
       </div>
 
       <!-- Alerta de sucesso -->
-      <div
-        id="alerta"
-        style="
-          display: none;
-          text-align: center;
-          margin-top: 10px;
-          color: green;
-          font-weight: bold;
-        "
-      ></div>
+      <div id="alerta"></div>
     </div>
 
-    <!-- Script JS -->
+    <!-- Modal da Tarefa -->
+    <div id="modal-tarefa">
+      <div class="modal-conteudo">
+        <h3 id="modal-titulo"></h3>
+        <p id="modal-descricao"></p>
+        <button
+          onclick="document.getElementById('modal-tarefa').style.display='none'"
+        >
+          Fechar
+        </button>
+      </div>
+    </div>
+
+    <!-- Script principal -->
     <script type="module" src="./js/tarefas.js"></script>
   </body>
 </html>
