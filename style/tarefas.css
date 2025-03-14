@@ -161,6 +161,30 @@ button:hover {
   align-items: center;
 }
 
+.copyright {
+  background: #007bff;
+  color: white;
+  text-align: center;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+}
+
+.copyright a {
+  color: yellow;
+  text-decoration: none;
+}
+
+.copyright a:hover {
+  text-decoration: underline;
+}
+
+@media screen and (max-width: 768px) {
+  .copyright {
+    font-size: 0.8rem;
+    padding: 8px;
+  }
+}
+
 .tarefa-actions button {
   font-size: 12px;
   padding: 2px 4px;
