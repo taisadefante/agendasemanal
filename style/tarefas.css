@@ -1,11 +1,18 @@
 /* style/tarefas.css */
 
-/* style/login.css */
+html,
 body {
-  font-family: "Segoe UI", sans-serif;
+  height: 100%;
   margin: 0;
-  padding: 20px;
+  padding: 0;
+  font-family: "Segoe UI", sans-serif;
   background-color: #f4f6f8;
+  display: flex;
+  flex-direction: column;
+}
+
+body {
+  flex: 1;
 }
 
 header {
@@ -25,6 +32,7 @@ h1 {
   display: none;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 #user-email {
@@ -35,6 +43,10 @@ h1 {
 .semana-container {
   max-width: 1200px;
   margin: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .semana-navegacao {
@@ -64,6 +76,8 @@ button:hover {
   width: 100%;
   border: 1px solid #ccc;
   overflow-x: auto;
+  margin-bottom: 10px;
+  flex-grow: 1;
 }
 
 .header-grid {
@@ -112,14 +126,14 @@ button:hover {
 
 .celula-dia {
   background-color: #ffffff;
-  padding: 5px 8px; /* menor padding */
+  padding: 5px 8px;
   border: 1px solid #ddd;
-  min-height: 20px; /* altura mínima reduzida */
+  min-height: 20px;
   position: relative;
   transition: background 0.3s ease;
   display: flex;
   flex-direction: column;
-  gap: 4px; /* espaçamento entre tarefas */
+  gap: 4px;
 }
 
 .celula-dia:hover {
@@ -138,33 +152,28 @@ button:hover {
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  flex-wrap: wrap;
 }
 
 .tarefa-actions {
   display: flex;
-  gap: 2px; /* reduz espaçamento entre ícones */
+  gap: 2px;
   align-items: center;
 }
 
 .tarefa-actions button {
-  font-size: 12px; /* ícones menores */
-  padding: 2px 4px; /* menos espaço interno */
-  margin: 0; /* zera margens */
+  font-size: 12px;
+  padding: 2px 4px;
+  margin: 0;
   line-height: 1;
   background: none;
   border: none;
   color: #333;
   cursor: pointer;
 }
+
 .tarefa-actions button:hover {
   color: #007bff;
-}
-.tarefa button {
-  background: none;
-  border: none;
-  color: #333;
-  font-size: 14px;
-  cursor: pointer;
 }
 
 .tarefa button:hover {
@@ -178,19 +187,16 @@ button:hover {
   color: #555;
 }
 
-/* Modal */
 .modal {
   display: none;
   position: fixed;
   z-index: 9999;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  inset: 0;
   background-color: rgba(0, 0, 0, 0.6);
   justify-content: center;
-  align-items: center;
-  padding: 20px;
+  align-items: flex-start;
+  padding: 30px 20px 10px;
+  overflow-y: auto;
 }
 
 .modal-content {
@@ -201,18 +207,14 @@ button:hover {
   width: 100%;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
   position: relative;
+  margin: 0 auto;
 }
 
-.modal-content h3 {
-  margin-top: 0;
-  color: #007bff;
-  font-size: 18px;
-  text-align: center;
-}
-
+.modal-content h3,
 .modal-content h2 {
   margin-top: 0;
   color: #007bff;
+  text-align: center;
 }
 
 .modal-content input,
@@ -257,16 +259,68 @@ button:hover {
 }
 
 @media screen and (max-width: 768px) {
-  .grade-semanal {
-    grid-template-columns: 60px repeat(7, minmax(100px, 1fr));
+  html,
+  body {
+    height: auto;
   }
-  .header-grid > div span:first-child {
+
+  .semana-navegacao {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .semana-navegacao button {
+    width: 100%;
     font-size: 14px;
   }
-  .hora-coluna {
+
+  .grade-semanal {
+    grid-template-columns: 60px repeat(7, minmax(100px, 1fr));
     font-size: 12px;
   }
+
+  .hora-coluna,
+  .header-grid > div {
+    padding: 5px;
+    font-size: 12px;
+  }
+
   .modal-content {
-    padding: 15px;
+    width: 100%;
+    max-width: 95%;
+    font-size: 14px;
+  }
+
+  .tarefa {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .tarefa-actions {
+    width: 100%;
+    justify-content: flex-end;
+    gap: 4px;
+  }
+
+  .tarefa-actions button {
+    font-size: 12px;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 14px;
+  }
+
+  #logout-box {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  header h1 {
+    font-size: 20px;
   }
 }
